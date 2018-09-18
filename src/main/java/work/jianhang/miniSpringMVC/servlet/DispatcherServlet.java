@@ -1,14 +1,19 @@
 package work.jianhang.miniSpringMVC.servlet;
 
 import work.jianhang.miniSpringMVC.annotation.*;
+import work.jianhang.miniSpringMVC.controller.UserController;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebInitParam;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
@@ -19,7 +24,7 @@ import java.util.Map;
 @WebServlet(name = "dispatcherServlet", urlPatterns = "/*", loadOnStartup = 1, initParams = {@WebInitParam(name = "base-package", value = "work.jianhang.miniSpringMVC")})
 public class DispatcherServlet extends HttpServlet {
 
-    private static final long serialVersionUID = 5769513437301767997L;
+    private static final long serialVersionUID = 7542676689830220173L;
 
     //扫描基包
     private String basePackage = "";
@@ -153,6 +158,35 @@ public class DispatcherServlet extends HttpServlet {
                         methodPackageMap.put(method, string);
                     }
                 }
+            }
+        }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doPost(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String uri = req.getRequestURI();
+        String contextPath = req.getContextPath();
+        String path = uri.replaceAll(contextPath, "");
+        //通过path找到Method
+        Method method = urlMethodMap.get(path);
+        if (method != null) {
+            //通过Method 拿到Controller对象，准备反射执行
+            String packageName = methodPackageMap.get(method);
+            String controllerName = nameMap.get(packageName);
+            //拿到Controller对象
+            UserController userController = (UserController) instanceMap.get(controllerName);
+            try {
+                method.setAccessible(true);
+                method.invoke(userController);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e){
+                e.printStackTrace();
             }
         }
     }
