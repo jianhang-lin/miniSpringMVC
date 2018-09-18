@@ -9,5 +9,10 @@ import java.lang.annotation.*;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Qualifier {
-    public String value();
+
+    /**
+     * VALUE属性
+     * @return String
+     */
+    String value();
 }

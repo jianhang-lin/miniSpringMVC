@@ -11,7 +11,7 @@ import java.lang.annotation.*;
 public @interface Controller {
     /**
      * 作用于该类上的注解有一个VALUE属性，说白了就是Controller的名称
-     * @return
+     * @return String
      */
-    public String value();
+    String value();
 }

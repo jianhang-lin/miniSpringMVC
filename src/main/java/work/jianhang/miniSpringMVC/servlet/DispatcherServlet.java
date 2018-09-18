@@ -4,14 +4,12 @@ import work.jianhang.miniSpringMVC.annotation.*;
 import work.jianhang.miniSpringMVC.controller.UserController;
 
 import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
 import javax.servlet.annotation.WebInitParam;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -41,11 +39,10 @@ public class DispatcherServlet extends HttpServlet {
 
     /**
      * init初始化处理
-     * @param config
-     * @throws ServletException
+     * @param config ServletConfig
      */
     @Override
-    public void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig config) {
         basePackage = config.getInitParameter("base-package");
 
         try {
@@ -68,7 +65,7 @@ public class DispatcherServlet extends HttpServlet {
 
     /**
      * 注意：基包是X.Y.Z的形式，而URL是X/Y/Z的形式，需要转换
-     * @param basePackage
+     * @param basePackage 基包
      */
     private void scanBasePackage(String basePackage) {
         //注意为了得到基包下面的URL路径需要对basePackage作转换：将.替换为/
@@ -76,19 +73,21 @@ public class DispatcherServlet extends HttpServlet {
         File basePackageFile = new File(url.getPath());
         System.out.println("scan:" + basePackageFile);
         File[] childFiles = basePackageFile.listFiles();
-        for (File file : childFiles) {
-            if (file.isDirectory()){//目录继续递归扫描
-                scanBasePackage(basePackage + "." + file.getName());
-            } else if (file.isFile()) {
-                //去掉class
-                packageNames.add(basePackage + "." + file.getName().split("\\.")[0]);
+        if (childFiles != null && childFiles.length > 0) {
+            for (File file : childFiles) {
+                if (file.isDirectory()){//目录继续递归扫描
+                    scanBasePackage(basePackage + "." + file.getName());
+                } else if (file.isFile()) {
+                    //去掉class
+                    packageNames.add(basePackage + "." + file.getName().split("\\.")[0]);
+                }
             }
         }
     }
 
     /**
      * 被注解标注的类的实例化
-     * @param packageNames
+     * @param packageNames 基包名
      */
     private void instance(List<String> packageNames) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         if (packageNames.size() < 1) {
@@ -121,7 +120,7 @@ public class DispatcherServlet extends HttpServlet {
     /**
      * 依赖注入
      */
-    private void springIOC() throws ClassNotFoundException, IllegalAccessException {
+    private void springIOC() throws IllegalAccessException {
         for (Map.Entry<String, Object> entry : instanceMap.entrySet()) {
             Field[] fields = entry.getValue().getClass().getDeclaredFields();
             for (Field field : fields) {
@@ -163,12 +162,12 @@ public class DispatcherServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
         doPost(req, resp);
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
         String uri = req.getRequestURI();
         String contextPath = req.getContextPath();
         String path = uri.replaceAll(contextPath, "");
