@@ -1,6 +1,7 @@
 package work.jianhang.miniSpringMVC.servlet;
 
 import work.jianhang.miniSpringMVC.annotation.Controller;
+import work.jianhang.miniSpringMVC.annotation.Qualifier;
 import work.jianhang.miniSpringMVC.annotation.Repository;
 import work.jianhang.miniSpringMVC.annotation.Service;
 
@@ -10,6 +11,7 @@ import javax.servlet.annotation.WebInitParam;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import java.io.File;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
@@ -20,7 +22,7 @@ import java.util.Map;
 @WebServlet(name = "dispatcherServlet", urlPatterns = "/*", loadOnStartup = 1, initParams = {@WebInitParam(name = "base-package", value = "work.jianhang.miniSpringMVC")})
 public class DispatcherServlet extends HttpServlet {
 
-    private static final long serialVersionUID = -7305339996300445842L;
+    private static final long serialVersionUID = 5769513437301767997L;
 
     //扫描基包
     private String basePackage = "";
@@ -110,6 +112,22 @@ public class DispatcherServlet extends HttpServlet {
                 instanceMap.put(repositoryName, c.newInstance());
                 nameMap.put(string, repositoryName);
                 System.out.println("Repository:" + string + ",value:" + repository.value());
+            }
+        }
+    }
+
+    /**
+     * 依赖注入
+     */
+    private void springIOC() throws ClassNotFoundException, IllegalAccessException {
+        for (Map.Entry<String, Object> entry : instanceMap.entrySet()) {
+            Field[] fields = entry.getValue().getClass().getDeclaredFields();
+            for (Field field : fields) {
+                if (field.isAnnotationPresent(Qualifier.class)) {
+                    String name = field.getAnnotation(Qualifier.class).value();
+                    field.setAccessible(true);
+                    field.set(entry.getValue(), instanceMap.get(name));
+                }
             }
         }
     }
