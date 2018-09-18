@@ -1,5 +1,9 @@
 package work.jianhang.miniSpringMVC.servlet;
 
+import work.jianhang.miniSpringMVC.annotation.Controller;
+import work.jianhang.miniSpringMVC.annotation.Repository;
+import work.jianhang.miniSpringMVC.annotation.Service;
+
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebInitParam;
@@ -7,7 +11,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import java.io.File;
 import java.lang.reflect.Method;
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,6 +78,38 @@ public class DispatcherServlet extends HttpServlet {
             } else if (file.isFile()) {
                 //去掉class
                 packageNames.add(basePackage + "." + file.getName().split("\\.")[0]);
+            }
+        }
+    }
+
+    /**
+     * 被注解标注的类的实例化
+     * @param packageNames
+     */
+    private void instance(List<String> packageNames) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+        if (packageNames.size() < 1) {
+            return;
+        }
+        for (String string : packageNames) {
+            Class c = Class.forName(string);
+            if (c.isAnnotationPresent(Controller.class)) {
+                Controller controller = (Controller) c.getAnnotation(Controller.class);
+                String controllerName = controller.value();
+                instanceMap.put(controllerName, c.newInstance());
+                nameMap.put(string, controllerName);
+                System.out.println("Controller:" + string + ",value:" + controller.value());
+            } else if (c.isAnnotationPresent(Service.class)){
+                Service service = (Service) c.getAnnotation(Service.class);
+                String serviceName = service.value();
+                instanceMap.put(serviceName, c.newInstance());
+                nameMap.put(string, serviceName);
+                System.out.println("Service:" + string + ",value:" + service.value());
+            } else if (c.isAnnotationPresent(Repository.class)) {
+                Repository repository = (Repository) c.getAnnotation(Repository.class);
+                String repositoryName = repository.value();
+                instanceMap.put(repositoryName, c.newInstance());
+                nameMap.put(string, repositoryName);
+                System.out.println("Repository:" + string + ",value:" + repository.value());
             }
         }
     }
