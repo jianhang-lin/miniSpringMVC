@@ -5,7 +5,10 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebInitParam;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
+import java.io.File;
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,6 +56,26 @@ public class DispatcherServlet extends HttpServlet {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * 注意：基包是X.Y.Z的形式，而URL是X/Y/Z的形式，需要转换
+     * @param basePackage
+     */
+    private void scanBasePackage(String basePackage) {
+        //注意为了得到基包下面的URL路径需要对basePackage作转换：将.替换为/
+        URL url = this.getClass().getClassLoader().getResource(basePackage.replaceAll("\\.","/"));
+        File basePackageFile = new File(url.getPath());
+        System.out.println("scan:" + basePackageFile);
+        File[] childFiles = basePackageFile.listFiles();
+        for (File file : childFiles) {
+            if (file.isDirectory()){//目录继续递归扫描
+                scanBasePackage(basePackage + "." + file.getName());
+            } else if (file.isFile()) {
+                //去掉class
+                packageNames.add(basePackage + "." + file.getName().split("\\.")[0]);
+            }
         }
     }
 }
