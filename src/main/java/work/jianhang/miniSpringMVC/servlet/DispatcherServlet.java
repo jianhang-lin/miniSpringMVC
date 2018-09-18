@@ -1,9 +1,6 @@
 package work.jianhang.miniSpringMVC.servlet;
 
-import work.jianhang.miniSpringMVC.annotation.Controller;
-import work.jianhang.miniSpringMVC.annotation.Qualifier;
-import work.jianhang.miniSpringMVC.annotation.Repository;
-import work.jianhang.miniSpringMVC.annotation.Service;
+import work.jianhang.miniSpringMVC.annotation.*;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -127,6 +124,34 @@ public class DispatcherServlet extends HttpServlet {
                     String name = field.getAnnotation(Qualifier.class).value();
                     field.setAccessible(true);
                     field.set(entry.getValue(), instanceMap.get(name));
+                }
+            }
+        }
+    }
+
+    /**
+     * URL映射处理
+     */
+    private void handlerUrlMethodMap() throws ClassNotFoundException {
+        if (packageNames.size() < 1) {
+            return;
+        }
+        for (String string : packageNames) {
+            Class c = Class.forName(string);
+            if (c.isAnnotationPresent(Controller.class)) {
+                Method[] methods = c.getMethods();
+                StringBuffer baseUrl = new StringBuffer();
+                if (c.isAnnotationPresent(RequestMapping.class)) {
+                    RequestMapping requestMapping = (RequestMapping) c.getAnnotation(RequestMapping.class);
+                    baseUrl.append(requestMapping.value());
+                }
+                for (Method method : methods) {
+                    if (method.isAnnotationPresent(RequestMapping.class)) {
+                        RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
+                        baseUrl.append(requestMapping.value());
+                        urlMethodMap.put(baseUrl.toString(), method);
+                        methodPackageMap.put(method, string);
+                    }
                 }
             }
         }
